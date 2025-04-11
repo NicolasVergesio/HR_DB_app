@@ -1,0 +1,205 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+
+//Base de datos para recursos humanos de una pequeña Pyme
+
+
+table genero {
+  id INTEGER [primary key]
+  sexo VARCHAR [not null]
+}
+
+
+table factor_sanguineo {
+  id integer [primary key]
+  tipo varchar [not null, unique]
+}
+
+
+table area {
+  id integer [primary key]
+  nombre varchar [not null, unique]
+  descripcion varchar
+}
+
+
+table area_puesto {
+  id integer [primary key]
+  id_area integer [not null, ref: > area.id]
+  puesto varchar [not null]
+  descripcion varchar
+}
+
+
+table status {
+  id integer [primary key]
+  tipo varchar [not null,unique, note: "activo o inactivo"]
+}
+
+
+table tipo_empleado {
+  id integer [primary key]
+  tipo varchar [not null,unique, note: "interno o tercero"]
+}
+
+
+table esquema_trabajo {
+  id integer [primary key]
+  tipo varchar [not null,unique, note: "presencial / hibrido / remoto"]
+}
+
+table domicilio_residencia {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  pais varchar [not null, default: "argentina"]
+  provincia varchar [not null]
+  localidad varchar [not null]
+  fecha_registro date [not null]
+  comentarios varchar
+}
+
+
+table tipo_relacion_familiar {
+  id integer [primary key]
+  tipo varchar [not null,unique, note: "hijo / hija / conyuge / madre / padre / segundo grado / tercer grado / otros"]
+  comentarios varchar
+}
+
+
+table grupo_familiar {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  id_tipo_relacion integer [not null, ref: > tipo_relacion_familiar.id]
+  fecha_carga_dato date
+  id_status integer [not null, ref: > status.id, note: "default activo / cambiar a inactivo cuando deje de pertenecer la persona al grupo"] 
+  cometarios varchar
+}
+
+table contacto_emergencia {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  numero_emergencia integer [not null]
+}
+
+table niveles_academicos {
+  id integer [primary key]
+  niveles varchar [not null, unique]
+  comentarios vachar
+}
+
+table niv_academico_empleado {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  nivel_academico integer [not null, ref: > niveles_academicos.id]
+  nombre_titulo varchar [not null]
+  institucion varchar 
+  estatus varchar [not null, note: "finalizado / en curso"]
+  fecha_carga_dato date
+  comentarios varchar
+}
+
+table tipo_licencias{
+  id integer [primary key]
+  tipo varchar [not null, unique, note: "vacaciones / licencia medica / paternidad / cuidado de un familiar / personal"]
+}
+
+table estado_solicitud {
+  id integer [primary key]
+  tipos_estado varchar [not null, unique, note: "pendiente / aprobada / rechazada"]
+}
+
+table solicitud_licencias {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  motivo integer [not null, ref: > tipo_licencias.id]
+  fecha_solicitud date [not null]
+  fecha_inicio_propuesta date [not null]
+  fecha_fin_propuesta date
+  justificacion text [note: "si aplica aclarar el motivo con mayor detalle"]
+  estado integer [not null, ref: > estado_solicitud.id]
+  aprob_recha_por integer [not null, ref: > empleados.id]
+}
+
+table empleados {
+  id INTEGER [primary key]
+  nombre varchar  [not null]
+  apellido varchar  [not null]
+  id_genero integer [not null,  ref: > genero.id]
+  id_factor_sangre integer [not null, ref: > factor_sanguineo.id]
+  fecha_nacimiento date [not null]
+  fecha_contratacion date [not null]
+  numero_personal integer [not null]
+  numero_corporativo integer
+  email_personal varchar [not null]
+  email_corporativo varchar
+  legajo integer [not null]
+  id_puesto integer [not null, ref: > area_puesto.id]
+  id_esquema_trabajo integer [not null, ref: > esquema_trabajo.id]
+  id_status integer [not null, ref: > status.id]
+  id_tipo_empleado integer [not null, ref: > tipo_empleado.id]  
+}
+
+
+
+
+table personas_a_cargo {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  id_personal_a_cargo integer [not null, ref: > empleados.id]
+}
+
+
+table causas {
+  id integer [primary key]
+  tipo varchar [not null, unique, note: "Despido o renuncia"]
+}
+
+
+table salidas {
+  id integer [primary key]
+  fecha_salida date [not null]
+  id_empleado integer [not null, ref: > empleados.id]
+  id_causas integer [not null, ref: > causas.id]
+}
+
+
+table horas_extras {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  fecha date [not null]
+  cantidad_horas_extras integer [not null]
+}
+
+
+
+
+table actualizacion_salarios {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  salario_anterior float [not null]
+  salario_nuevo float [not null]
+  fecha_actualizacion date [not null]
+}
+
+
+table promociones_cambio_puesto {
+  id integer [primary key]
+  id_empleado integer [not null, ref: > empleados.id]
+  id_puesto_anterior integer [not null, ref: > area_puesto.id]
+  id_nuevo_puesto integer [not null, ref: > area_puesto.id]
+  fecha_prom_cambio date [not null]
+}
+
+
+
+
+table auditoria{
+  id integer [primary key]
+  id_usuario integer [not null, ref: > empleados.id]
+  tabla_afectada varchar [not null]
+  accion varchar [not null, note: "INSERT, UPDATE, DELETE"]
+  id_registro integer [not null, note: "ID del registro afectado"]
+  fecha_hora timestamp [not null]
+  detalle json [note: "Datos antiguos o nuevos del cambio"]
+}
